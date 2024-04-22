@@ -950,172 +950,157 @@ public:
         }
     }
 
-    // # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    // # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    // TODO необходим рефакторинг  # # # # # # # # # # # # # # # # # # # # # #
-    // # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    // # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
     List(const string file_path)
     {
         ifstream file(file_path);
         list_name = file_path;
+        sections_amount = 0;
+
         unsigned long int lines_amount = 0;
-        string line;
+        string line = "";
+
         while (getline(file, line))
         {
             lines_amount++;
         }
+
         file.clear();
         file.seekg(0, ios::beg);
+
         string* lines = new string[lines_amount];
         unsigned long int i = 0;
+
         while (getline(file, line))
         {
             lines[i] = line;
             i++;
         }
-        sections_amount = 0;
-        int index_employee = 0;
+
+        unsigned long int index_employee = 0;
         const unsigned long int sections_max_amount = 32;
         sections = new Section * [sections_max_amount];
-        for (size_t i = 0; i < lines_amount; i++)
+
+        int position = 0;
+
+        for (unsigned long int l = 0; l < lines_amount; l++)
         {
-            int position = lines[i].find("Участок : ");
+            position = lines[l].find("Участок : ");
             if (position > 0)
             {
                 sections[sections_amount] = new Section();
-                sections[sections_amount]->set_section_code(lines[i].substr(position + 10, 3));
+                sections[sections_amount]->set_section_code(lines[l].substr(position + 10, 3));
                 const string section_name = "Участок " + sections[sections_amount]->get_section_code();
-                for (size_t j = i + 1; j < lines_amount; j++)
+
+                for (unsigned long int j = l + 1; j < lines_amount; j++)
                 {
                     position = lines[j].find(section_name);
-                    if (position != string::npos && lines[j - 1].find("ГП") != string::npos)
+                    if (position != string::npos && lines[j].find("Проф.") && (lines[j + 1].find("Оклад") || lines[j + 1].find("Тар.ст.:")) && lines[j + 1].find("Яв"))
                     {
-                        int i = 0;
-                        string code = lines[j - 1].substr(0, 6);
-                        string name = lines[j - 1].substr(7, 19);
-                        string id = lines[j - 1].substr(26, 10);
-                        cout << code << "  " << name << "  " << id << endl;
+                        string employee_service_number = lines[j - 1].substr(0, 6);
+                        string employee_full_name = lines[j - 1].substr(7, 19);
+                        string employee_id_code = lines[j - 1].substr(26, 10);
+                        string employee_section_code = lines[j].substr(8, 3);
+                        string employee_profession_code = lines[j].substr(18, 3);
+                        position = lines[j + 1].find("г.");
+                        string employee_period = lines[j + 1].substr(0, position + 2);
+                        string employee_salary = lines[j + 1].substr(position + 11, 9);
+                        position = lines[j + 1].find("Яв");
+                        string employee_attendance_in_schedule = lines[j + 1].substr(position + 3, 2);
 
-                        string section = section_name;
+                        unsigned long int employee_accurals_amount = 0;
+                        unsigned long int employee_retentions_amount = 0;
 
-                        position = lines[j].find("Проф. ");
-                        string profession = "";
-                        if (position != string::npos && lines[j].find(section_name) != string::npos)
+                        for (unsigned long int k = j + 3; k < lines_amount; k++)
                         {
-                            profession = lines[j].substr(position + 6, 3);
+                            if (lines[k].find("ИТОГО:") != string::npos) break;
+                            if (lines[k].substr(0, 6) != "      ") employee_accurals_amount++;
+                            if (lines[k].substr(24, 6) != "      ") employee_retentions_amount++;
                         }
 
-                        position = lines[j + 1].find(" г.");
-                        string period = "";
-                        if (position != string::npos && (lines[j + 1].find("Оклад : ") || lines[j + 1].find("Тар.ст.: ")))
-                        {
-                            period = lines[j + 1].substr(0, position);
-                        }
-                        cout << section << "  " << profession << "  " << endl;
+                        sections[sections_amount]->add_employee(employee_service_number,
+                                                                employee_full_name,
+                                                                employee_id_code,
+                                                                employee_section_code,
+                                                                employee_profession_code,
+                                                                employee_period,
+                                                                atof(employee_salary.c_str()),
+                                                                atof(employee_attendance_in_schedule.c_str()),
+                                                                employee_accurals_amount,
+                                                                employee_retentions_amount);
 
-                        if (lines[j + 1].find("Оклад : ") != std::string::npos)
-                        {
-                            position = lines[j + 1].find("Оклад : ") + 8;
-                        }
+                        unsigned long int accurals_index = 0;
+                        unsigned long int retentions_index = 0;
 
-                        if (lines[j + 1].find("Тар.ст.: ") != std::string::npos)
-                        {
-                            position = lines[j + 1].find("Тар.ст.: ") + 9;
-                        }
+                        string employee_accurals_period = "";
+                        string employee_accurals_type = "";
+                        string employee_accurals_sum = "";
+                        string employee_accurals_attendance = "";
+                        string employee_accurals_hours = "";
 
-                        string salary_str = "";
-                        if (position != string::npos && lines[j + 1].find("Яв"))
-                        {
-                            salary_str = lines[j + 1].substr(position, 9);
-                        }
-
-                        string attendance_in_schedule = "";
-                        position = lines[j + 1].find("Яв ") + 3;
-                        if (position != string::npos)
-                        {
-                            attendance_in_schedule = lines[j + 1].substr(position, 2);
-                        }
-                        
-                        cout << period << "  " << salary_str << "  " << attendance_in_schedule << endl;
-
-                        unsigned long int accurals_amount = 0;
-                        unsigned long int retentions_amount = 0;
-                        for (size_t k = j + 3; k < lines_amount; k++)
-                        {
-                            if (lines[k].find("ИТОГО:") != std::string::npos)
-                            {
-                                break;
-                            }
-                            if (lines[k].substr(0, 6) != "      ")
-                            {
-                                accurals_amount++;
-                            }
-                            if (lines[k].substr(24, 6) != "      ")
-                            {
-                                retentions_amount++;
-                            }
-                        }
-
-                        sections[sections_amount]->add_employee(code, name, id, section_name, profession, period, atof(salary_str.c_str()), atof(attendance_in_schedule.c_str()), accurals_amount, retentions_amount);
-
-                        string sub_period1 = "";
-                        string sub_period2 = "";
-                        string type = "";
-                        string sum = "";
-                        string attendance = "";
-                        string hours = "";
-
-                        i = 0;
-                        cout << "начисления:" << endl;
-
-                        for (size_t k = j + 3; k < accurals_amount + j + 3; k++)
+                        for (unsigned long int k = j + 3; k < employee_accurals_amount + j + 3; k++)
                         {
                             if (lines[k].substr(0, 2) == "  ")
                             {
-                                sub_period1 = period;
+                                employee_accurals_period = employee_period;
                             }
                             else
                             {
-                                sub_period1 = lines[k].substr(0, 2);
+                                employee_accurals_period = lines[k].substr(0, 2);
                             }
 
-                            type = lines[k].substr(3, 3);
-                            sum = lines[k].substr(7, 10);
-                            attendance = lines[k].substr(17, 2);
-                            hours = lines[k].substr(20, 3);
+                            employee_accurals_type = lines[k].substr(3, 3);
+                            employee_accurals_sum = lines[k].substr(7, 10);
+                            employee_accurals_attendance = lines[k].substr(17, 2);
+                            employee_accurals_hours = lines[k].substr(20, 3);
 
-                            sections[sections_amount]->set_employee_accurals_period(index_employee, i, sub_period1);
-                            sections[sections_amount]->set_employee_accurals_type(index_employee, i, type);
-                            sections[sections_amount]->set_employee_accurals_sum(index_employee, i, atof(sum.c_str()));
-                            sections[sections_amount]->set_employee_accurals_attendance(index_employee, i, atof(attendance.c_str()));
-                            sections[sections_amount]->set_employee_accurals_hours(index_employee, i, atof(hours.c_str()));
-                            i++;
-                            cout << sub_period1 << "  " << type << "  " << sum << "  " << attendance << "  " << hours << endl;
+                            sections[sections_amount]->set_employee_accurals_period(index_employee,
+                                                                    accurals_index,
+                                                                    employee_accurals_period);
+                            sections[sections_amount]->set_employee_accurals_type(index_employee,
+                                                                    accurals_index,
+                                                                    employee_accurals_type);
+                            sections[sections_amount]->set_employee_accurals_sum(index_employee,
+                                                                    accurals_index,
+                                                                    atof(employee_accurals_sum.c_str()));
+                            sections[sections_amount]->set_employee_accurals_attendance(index_employee,
+                                                                    accurals_index,
+                                                                    atof(employee_accurals_attendance.c_str()));
+                            sections[sections_amount]->set_employee_accurals_hours(index_employee,
+                                                                    accurals_index,
+                                                                    atof(employee_accurals_hours.c_str()));
+
+                            accurals_index++;
                         }
-                        i = 0;
-                        cout << "удержания:" << endl;
-                        for (size_t k = j + 3; k < retentions_amount + j + 3; k++)
+
+                        string employee_retentions_period = "";
+                        string employee_retentions_type = "";
+                        string employee_retentions_sum = "";
+
+                        for (unsigned long int k = j + 3; k < employee_retentions_amount + j + 3; k++)
                         {
                             if (lines[k].substr(24, 2) == "  ")
-	                        {
-                                sub_period2 = period;
-	                        }
+                            {
+                                employee_retentions_period = employee_period;
+                            }
                             else
                             {
-                                sub_period2 = lines[k].substr(24, 2);
+                                employee_retentions_period = lines[k].substr(24, 2);
                             }
 
-                            type = lines[k].substr(27, 3);
-                            sum = lines[k].substr(32, 8);
+                            employee_retentions_type = lines[k].substr(27, 3);
+                            employee_retentions_sum = lines[k].substr(32, 8);
 
-                            sections[sections_amount]->set_employee_retentions_period(index_employee, i, sub_period2);
-                            sections[sections_amount]->set_employee_retentions_type(index_employee, i, type);
-                            sections[sections_amount]->set_employee_retentions_sum(index_employee, i, atof(sum.c_str()));
-                            
-                            cout << sub_period2 << "  " << type << "  " << sum << endl;
-                            i++;
+                            sections[sections_amount]->set_employee_retentions_period(index_employee,
+                                retentions_index,
+                                employee_retentions_period);
+                            sections[sections_amount]->set_employee_retentions_type(index_employee,
+                                retentions_index,
+                                employee_retentions_type);
+                            sections[sections_amount]->set_employee_retentions_sum(index_employee,
+                                retentions_index,
+                                atof(employee_retentions_sum.c_str()));
+
+                            retentions_index++;
                         }
                         index_employee++;
                     }
@@ -1123,14 +1108,8 @@ public:
                 sections_amount++;
             }
         }
-        delete[] lines;
+        delete[]lines;
     }
-
-    // # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    // # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    // TODO необходим рефакторинг  # # # # # # # # # # # # # # # # # # # # # #
-    // # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    // # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     List(const List& src_object)
     {
