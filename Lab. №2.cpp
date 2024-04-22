@@ -9,42 +9,6 @@
 
 using namespace std;
 
-bool is_only_digits(const string &src_string)
-{
-    bool result = true;
-    auto iterator = src_string.begin();
-
-    while (iterator != src_string.end())
-    {
-        if (!isdigit(*iterator))
-        {
-            result = false;
-            break;
-        }
-        iterator++;
-    }
-
-    return result;
-}
-
-bool is_only_letters(const string& src_string)
-{
-    bool result = true;
-    auto iterator = src_string.begin();
-
-    while (iterator != src_string.end())
-    {
-        if (!isalpha(*iterator))
-        {
-            result = false;
-            break;
-        }
-        iterator++;
-    }
-
-    return result;
-}
-
 class Retention
 {
 private:
@@ -61,7 +25,7 @@ public:
 
     Retention(const string _period, const string _type, const double _sum)
     {
-        if (_period.length() == 8 && is_only_digits(_period))
+        if (_period.length() == 8)
         {
             period = _period;
         }
@@ -70,7 +34,7 @@ public:
             period = "N/A";
         }
 
-        if (_type.length() == 3 && is_only_digits(_type))
+        if (_type.length() == 3)
         {
             type = _type;
         }
@@ -106,7 +70,7 @@ public:
     {
         bool result = false;
 
-        if (settable_period.length() == 8 && is_only_digits(settable_period))
+        if (settable_period.length() == 8)
         {
             period = settable_period;
             result = true;
@@ -119,7 +83,7 @@ public:
     {
         bool result = false;
 
-        if (settable_type.length() == 3 && is_only_digits(settable_type))
+        if (settable_type.length() == 3)
         {
             type = settable_type;
             result = true;
@@ -230,7 +194,7 @@ public:
 
     Employee(const string _service_number, const  string _full_name, const  string _id_code, const  string _section_code, const  string _profession_code, const  string _period, const  double _salary, const  unsigned long int _attendance_in_schedule, const  unsigned long int _accurals_amount, const  unsigned long int _retentions_amount)
     {
-        if (_service_number.length() > 0 && is_only_digits(_service_number))
+        if (_service_number.length() > 0)
         {
             service_number = _service_number;
         }
@@ -239,7 +203,7 @@ public:
             service_number = "N/A";
         }
 
-        if (_full_name.length() > 0 && is_only_letters(_full_name))
+        if (_full_name.length() > 0)
         {
             full_name = _full_name;
         }
@@ -248,7 +212,7 @@ public:
             full_name = "N/A";
         }
 
-        if (_id_code.length() > 0 && is_only_digits(_id_code))
+        if (_id_code.length() > 0)
         {
             id_code = _id_code;
         }
@@ -266,7 +230,7 @@ public:
             section_code = "N/A";
         }
 
-        if (_profession_code.length() > 0 && is_only_digits(_profession_code))
+        if (_profession_code.length() > 0)
         {
             profession_code = _profession_code;
         }
@@ -275,7 +239,7 @@ public:
             profession_code = "N/A";
         }
 
-        if (_period.length() == 8 && is_only_digits(_period))
+        if (_period.length() == 8)
         {
             period = _period;
         }
@@ -415,7 +379,7 @@ public:
     {
         bool result = false;
 
-        if (settable_service_number.length() > 0 && is_only_digits(settable_service_number))
+        if (settable_service_number.length() > 0)
         {
             service_number = settable_service_number;
             result = true;
@@ -428,7 +392,7 @@ public:
     {
         bool result = false;
 
-        if (settable_full_name.length() > 0 && is_only_letters(settable_full_name))
+        if (settable_full_name.length() > 0)
         {
             full_name = settable_full_name;
             result = true;
@@ -441,7 +405,7 @@ public:
     {
         bool result = false;
 
-        if (settable_id_code.length() > 0 && is_only_digits(settable_id_code))
+        if (settable_id_code.length() > 0)
         {
             id_code = settable_id_code;
             result = true;
@@ -467,7 +431,7 @@ public:
     {
         bool result = false;
 
-        if (settable_professional_code.length() > 0 && is_only_digits(settable_professional_code))
+        if (settable_professional_code.length() > 0)
         {
             profession_code = settable_professional_code;
             result = true;
@@ -480,7 +444,7 @@ public:
     {
         bool result = false;
 
-        if (settable_period.length() == 8 && is_only_digits(settable_period))
+        if (settable_period.length() == 8)
         {
             period = settable_period;
             result = true;
@@ -556,7 +520,7 @@ public:
 
     bool set_retentions_sum(const unsigned long int index_retentions_sum, const double settable_retentions_sum)
     {
-        const bool result = accurals[index_retentions_sum]->set_sum(settable_retentions_sum);
+        const bool result = retentions[index_retentions_sum]->set_sum(settable_retentions_sum);
         return result;
     }
 
@@ -1012,6 +976,7 @@ public:
             i++;
         }
         sections_amount = 0;
+        int index_employee = 0;
         const unsigned long int sections_max_amount = 32;
         sections = new Section * [sections_max_amount];
         for (size_t i = 0; i < lines_amount; i++)
@@ -1027,6 +992,7 @@ public:
                     position = lines[j].find(section_name);
                     if (position != string::npos && lines[j - 1].find("ГП") != string::npos)
                     {
+                        int i = 0;
                         string code = lines[j - 1].substr(0, 6);
                         string name = lines[j - 1].substr(7, 19);
                         string id = lines[j - 1].substr(26, 10);
@@ -1072,9 +1038,86 @@ public:
                             attendance_in_schedule = lines[j + 1].substr(position, 2);
                         }
                         
-                        cout << period << "  " << salary_str << "  " << attendance_in_schedule << "\n\n" << endl;
+                        cout << period << "  " << salary_str << "  " << attendance_in_schedule << endl;
 
-                        
+                        unsigned long int accurals_amount = 0;
+                        unsigned long int retentions_amount = 0;
+                        for (size_t k = j + 3; k < lines_amount; k++)
+                        {
+                            if (lines[k].find("ИТОГО:") != std::string::npos)
+                            {
+                                break;
+                            }
+                            if (lines[k].substr(0, 6) != "      ")
+                            {
+                                accurals_amount++;
+                            }
+                            if (lines[k].substr(24, 6) != "      ")
+                            {
+                                retentions_amount++;
+                            }
+                        }
+
+                        sections[sections_amount]->add_employee(code, name, id, section_name, profession, period, atof(salary_str.c_str()), atof(attendance_in_schedule.c_str()), accurals_amount, retentions_amount);
+
+                        string sub_period1 = "";
+                        string sub_period2 = "";
+                        string type = "";
+                        string sum = "";
+                        string attendance = "";
+                        string hours = "";
+
+                        i = 0;
+                        cout << "начисления:" << endl;
+
+                        for (size_t k = j + 3; k < accurals_amount + j + 3; k++)
+                        {
+                            if (lines[k].substr(0, 2) == "  ")
+                            {
+                                sub_period1 = period;
+                            }
+                            else
+                            {
+                                sub_period1 = lines[k].substr(0, 2);
+                            }
+
+                            type = lines[k].substr(3, 3);
+                            sum = lines[k].substr(7, 10);
+                            attendance = lines[k].substr(17, 2);
+                            hours = lines[k].substr(20, 3);
+
+                            sections[sections_amount]->set_employee_accurals_period(index_employee, i, sub_period1);
+                            sections[sections_amount]->set_employee_accurals_type(index_employee, i, type);
+                            sections[sections_amount]->set_employee_accurals_sum(index_employee, i, atof(sum.c_str()));
+                            sections[sections_amount]->set_employee_accurals_attendance(index_employee, i, atof(attendance.c_str()));
+                            sections[sections_amount]->set_employee_accurals_hours(index_employee, i, atof(hours.c_str()));
+                            i++;
+                            cout << sub_period1 << "  " << type << "  " << sum << "  " << attendance << "  " << hours << endl;
+                        }
+                        i = 0;
+                        cout << "удержания:" << endl;
+                        for (size_t k = j + 3; k < retentions_amount + j + 3; k++)
+                        {
+                            if (lines[k].substr(24, 2) == "  ")
+	                        {
+                                sub_period2 = period;
+	                        }
+                            else
+                            {
+                                sub_period2 = lines[k].substr(24, 2);
+                            }
+
+                            type = lines[k].substr(27, 3);
+                            sum = lines[k].substr(32, 8);
+
+                            sections[sections_amount]->set_employee_retentions_period(index_employee, i, sub_period2);
+                            sections[sections_amount]->set_employee_retentions_type(index_employee, i, type);
+                            sections[sections_amount]->set_employee_retentions_sum(index_employee, i, atof(sum.c_str()));
+                            
+                            cout << sub_period2 << "  " << type << "  " << sum << endl;
+                            i++;
+                        }
+                        index_employee++;
                     }
                 }
                 sections_amount++;
