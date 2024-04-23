@@ -5,9 +5,51 @@
 #include <string>
 #include <cstring>
 #include <cctype>
+#include <iomanip>
+#include <map>
 #include <windows.h>
 
 using namespace std;
+
+string parse_month_to_number(const string& month)
+{
+    map<string, string> months = {
+        {"Январь", "01"}, {"Февраль", "02"}, {"Март", "03"},
+        {"Апрель", "04"}, {"Май", "05"}, {"Июнь", "06"},
+        {"Июль", "07"}, {"Август", "08"}, {"Сентябрь", "09"},
+        {"Октябрь", "10"}, {"Ноябрь", "11"}, {"Декабрь", "12"}
+    };
+
+    return months[month];
+}
+
+string parse_number_to_month(const string& number)
+{
+    map<string, string> months = {
+        {"01", "Январь"}, {"02", "Февраль"}, {"03", "Март"},
+        {"04", "Апрель"}, {"05", "Май"}, {"06", "Июнь"},
+        {"07", "Июль"}, {"08", "Август"}, {"09", "Сентябрь"},
+        {"10", "Октябрь"}, {"11", "Ноябрь"}, {"12", "Декабрь"}
+    };
+
+    return months[number];
+}
+
+string parse_period_to_number_format(const string& date)
+{
+    string month = date.substr(0, date.find(' '));
+    string year = date.substr(date.rfind(' ') + 1);
+
+    return year + parse_month_to_number(month);
+}
+
+string parse_number_to_period_format(const string& number)
+{
+    string year = number.substr(0, 4);
+    string month = number.substr(4, 2);
+
+    return parse_number_to_month(month) + " " + year + " г.";
+}
 
 class Retention
 {
@@ -25,14 +67,16 @@ public:
 
     Retention(const string _period, const string _type, const double _sum)
     {
-        if (_period.length() == 8)
-        {
-            period = _period;
-        }
-        else
-        {
-            period = "N/A";
-        }
+        //if (_period.length() == 8)
+        //{
+        //    period = _period;
+        //}
+        //else
+        //{
+        //    period = "N/A";
+        //}
+
+        period = _period;
 
         if (_type.length() == 3)
         {
@@ -70,7 +114,7 @@ public:
     {
         bool result = false;
 
-        if (settable_period.length() == 8)
+        if (settable_period.length() == 2)
         {
             period = settable_period;
             result = true;
@@ -103,6 +147,11 @@ public:
         }
 
         return result;
+    }
+
+    void output() const
+    {
+        cout << period << "  " << type << "  " << sum << endl;
     }
 };
 
@@ -159,6 +208,11 @@ public:
         }
 
         return result;
+    }
+
+    void output() const
+    {
+        cout << get_period() << "  " << get_type() << "  " << get_sum() << "  " << attendance << "  " << hours << endl;
     }
 };
 
@@ -239,14 +293,16 @@ public:
             profession_code = "N/A";
         }
 
-        if (_period.length() == 8)
-        {
-            period = _period;
-        }
-        else
-        {
-            period = "N/A";
-        }
+        //if (_period.length() == 6)
+        //{
+        //    period = _period;
+        //}
+        //else
+        //{
+        //    period = "N/A";
+        //}
+
+        period = _period;
 
         if (_salary >= 0.0)
         {
@@ -596,6 +652,45 @@ public:
     // # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     // # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     // # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+    void output() const
+    {
+        cout << service_number << "  " << full_name << "  " << id_code << "\n";
+        cout << "Участок: " << section_code << "  Проф.: " << profession_code << "\n";
+
+        //if (salary <= 100)
+        //{
+        //    cout << parse_number_to_period_format(period) << " Тар.ст.: " << salary << " Яв" << attendance_in_schedule << "\n";
+        //}
+        //else
+        //{
+        //    cout << parse_number_to_period_format(period) << " Оклад: " << salary << " Яв" << attendance_in_schedule << "\n";
+        //}
+
+        if (salary <= 100)
+        {
+            cout << period << " Тар.ст.: " << salary << " Яв " << attendance_in_schedule << "\n";
+        }
+        else
+        {
+            cout << period << " Оклад: " << salary << " Яв " << attendance_in_schedule << "\n";
+        }
+
+        cout << "Начисления:\n";
+        cout << "Мц В/О Начислено Яв Час\n";
+        unsigned long int i = 0;
+        for (i = 0; i < accurals_amount; i++)
+        {
+            accurals[i]->output();
+        }
+        cout << "Удержания:\n";
+        cout << "Мц В/У Удержано\n";
+        for (i = 0; i < retentions_amount; i++)
+        {
+            retentions[i]->output();
+        }
+        cout << "\n\n" << endl;
+    }
 };
 
 class Section
@@ -915,6 +1010,16 @@ public:
         employees = new_employees;
         employees_amount++;
     }
+
+    void output() const
+    {
+        cout << "Участок: " << section_code << "\n\n";
+        for (int i = 0; i < employees_amount; i++)
+        {
+            employees[i]->output();
+        }
+        cout << "\n\n" << endl;
+    }
 };
 
 class List
@@ -1002,6 +1107,7 @@ public:
                         string employee_section_code = lines[j].substr(8, 3);
                         string employee_profession_code = lines[j].substr(18, 3);
                         position = lines[j + 1].find("г.");
+                        //string employee_period = parse_period_to_number_format(lines[j + 1].substr(0, position + 2));
                         string employee_period = lines[j + 1].substr(0, position + 2);
                         string employee_salary = lines[j + 1].substr(position + 11, 9);
                         position = lines[j + 1].find("Яв");
@@ -1039,15 +1145,7 @@ public:
 
                         for (unsigned long int k = j + 3; k < employee_accurals_amount + j + 3; k++)
                         {
-                            if (lines[k].substr(0, 2) == "  ")
-                            {
-                                employee_accurals_period = employee_period;
-                            }
-                            else
-                            {
-                                employee_accurals_period = lines[k].substr(0, 2);
-                            }
-
+                            employee_accurals_period = lines[k].substr(0, 2);
                             employee_accurals_type = lines[k].substr(3, 3);
                             employee_accurals_sum = lines[k].substr(7, 10);
                             employee_accurals_attendance = lines[k].substr(17, 2);
@@ -1078,15 +1176,7 @@ public:
 
                         for (unsigned long int k = j + 3; k < employee_retentions_amount + j + 3; k++)
                         {
-                            if (lines[k].substr(24, 2) == "  ")
-                            {
-                                employee_retentions_period = employee_period;
-                            }
-                            else
-                            {
-                                employee_retentions_period = lines[k].substr(24, 2);
-                            }
-
+                            employee_retentions_period = lines[k].substr(24, 2);
                             employee_retentions_type = lines[k].substr(27, 3);
                             employee_retentions_sum = lines[k].substr(32, 8);
 
@@ -1156,6 +1246,16 @@ public:
 
         return result;
     }
+
+    void output() const
+    {
+        cout << "Файл: " << list_name << "\n\n";
+        for (int i = 0; i < sections_amount; i++)
+        {
+            sections[i]->output();
+        }
+        cout << "\n\n" << endl;
+    }
 };
 
 int main()
@@ -1163,5 +1263,9 @@ int main()
     SetConsoleCP(1251);
     SetConsoleOutputCP(1251);
     cout << "Hello World!\n";
-    List A("C:\\Users\\i8888\\YandexDisk\\Университет\\Работы\\Лабораторные работы\\Объектно-ориентированное программирование\\Лабораторная работа №2\\Lab. №2\\input_data.TXT");
+    List A("C:\\Users\\i8888\\YandexDisk\\Университет\\Работы\\Лабораторные работы\\Объектно-ориентированное программирование\\Лабораторная работа №2\\Lab. №2\\File A.TXT");
+    A.output();
+    List B("C:\\Users\\i8888\\YandexDisk\\Университет\\Работы\\Лабораторные работы\\Объектно-ориентированное программирование\\Лабораторная работа №2\\Lab. №2\\File B.TXT");
+    B.output();
+    return 0;
 }
